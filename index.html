@@ -1,556 +1,1442 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastaimy Engine Pro</title>
-    <style>
-        :root {
-            --bg-darkest: #181818; --bg-dark: #1e1e1e; --bg-panel: #252526; 
-            --bg-header: #2d2d2d; --text-main: #cccccc; --text-highlight: #ffffff; 
-            --accent: #007acc; --accent-hover: #005a9e; --border: #3e3e42; 
-            --error: #f44747; --success: #4caf50;
-        }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg-darkest); color: var(--text-main); overflow: hidden; font-size: 13px; }
-        
-        #app { display: grid; grid-template-rows: 40px 1fr; grid-template-columns: 240px 1fr 280px; height: 100vh; }
-        
-        /* Toolbar */
-        #toolbar { grid-column: 1 / 4; background: var(--bg-header); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 10px; }
-        .logo { font-weight: bold; font-size: 16px; color: var(--text-highlight); letter-spacing: 1px; margin-right: 20px; }
-        .btn { background: transparent; border: 1px solid transparent; color: var(--text-main); cursor: pointer; padding: 5px 12px; border-radius: 4px; font-size: 13px; transition: all 0.2s; }
-        .btn:hover { background: #3e3e42; border-color: #555; }
-        .btn-primary { background: var(--accent); color: white; font-weight: 600; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-play { color: var(--success); font-weight: bold; }
-        .btn-stop { color: var(--error); font-weight: bold; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .spacer { flex: 1; }
-
-        /* Panels */
-        .panel { background: var(--bg-panel); border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-header { background: var(--bg-header); padding: 8px 12px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; }
-        .panel-content { flex: 1; overflow-y: auto; padding: 10px; }
-        
-        #hierarchy { grid-row: 2; grid-column: 1; }
-        .hier-item { padding: 6px 10px; cursor: pointer; border-radius: 4px; margin-bottom: 2px; font-size: 13px; }
-        .hier-item:hover { background: #2a2d2e; }
-        .hier-item.selected { background: var(--accent); color: white; }
-        .add-btn-group { display: flex; gap: 4px; }
-        .add-btn { padding: 3px 8px; background: #3e3e42; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; }
-        .add-btn:hover { background: #505050; }
-        
-        #center { grid-row: 2; grid-column: 2; display: flex; flex-direction: column; }
-        #viewport { flex: 1; position: relative; background: #1a1a1a; display: flex; flex-direction: column; }
-        #viewport-toolbar { position: absolute; top: 10px; left: 10px; display: flex; gap: 5px; z-index: 10; }
-        .gizmo-btn { padding: 5px 10px; background: rgba(30,30,30,0.8); color: #ccc; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .gizmo-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-        #canvas-container { flex: 1; position: relative; }
-        
-        #script-container { height: 220px; border-top: 2px solid var(--border); display: flex; flex-direction: column; background: var(--bg-dark); }
-        #script-header { background: var(--bg-header); padding: 6px 12px; font-weight: 600; border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; display: flex; justify-content: space-between; }
-        #script-editor { flex: 1; }
-        #script-error { color: var(--error); font-size: 12px; padding: 5px 10px; background: #2d1414; border-top: 1px solid #5a2424; display: none; font-family: monospace; }
-        
-        #inspector { grid-row: 2; grid-column: 3; }
-        .insp-section { margin-bottom: 15px; }
-        .insp-title { font-weight: 600; margin-bottom: 8px; color: var(--text-highlight); border-bottom: 1px solid var(--border); padding-bottom: 5px; font-size: 12px;}
-        .insp-row { display: flex; align-items: center; margin-bottom: 6px; }
-        .insp-label { width: 60px; font-size: 12px; color: #888; }
-        .insp-input { flex: 1; background: #1e1e1e; border: 1px solid var(--border); color: white; padding: 4px 8px; border-radius: 3px; font-size: 12px; }
-        .insp-input:focus { outline: none; border-color: var(--accent); }
-        .xyz-group { display: flex; gap: 4px; flex: 1; }
-        .xyz-input { width: 33%; text-align: center; }
-        .xyz-x { border-left: 2px solid #f44336 !important; }
-        .xyz-y { border-left: 2px solid #4caf50 !important; }
-        .xyz-z { border-left: 2px solid #2196f3 !important; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Circuit Sandbox</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#c9d1d9;
+--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;
+--wire-on:#3fb950;--wire-off:#484f58;
+}
+body{font-family:'Segoe UI',monospace;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column;user-select:none}
+#toolbar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+#toolbar .sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+#toolbar button{background:#21262d;color:var(--text);border:1px solid var(--border);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
+#toolbar button:hover{background:#30363d;border-color:#8b949e}
+#toolbar button.active{background:#1f6feb;border-color:#1f6feb;color:#fff}
+#toolbar button.run-btn{background:#238636;border-color:#238636;color:#fff}
+#toolbar button.run-btn:hover{background:#2ea043}
+#toolbar select{background:#21262d;color:var(--text);border:1px solid var(--border);padding:5px 8px;border-radius:6px;font-size:13px}
+#toolbar label{font-size:12px;color:#8b949e}
+#main{display:flex;flex:1;overflow:hidden}
+#palette{width:190px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+#palette h3{padding:10px 12px 6px;font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px}
+.pal-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:grab;font-size:12px;transition:background .15s;border-left:3px solid transparent}
+.pal-item:hover{background:#21262d;border-left-color:var(--accent)}
+.pal-item .icon{width:28px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:var(--accent)}
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#canvas-wrap{flex:1;position:relative;overflow:hidden}
+#canvas{cursor:crosshair;display:block}
+#props{position:absolute;top:10px;right:10px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:220px;display:none;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#props h4{margin-bottom:8px;color:var(--accent);font-size:14px}
+#props .pr{display:flex;justify-content:space-between;margin:4px 0;align-items:center}
+#props .pr label{color:#8b949e}
+#props button{margin-top:8px;background:#da3633;color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+#props button.sec{background:#21262d;margin-left:4px}
+#cli-panel{height:200px;background:#0d1117;border-top:2px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+#cli-header{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;color:#8b949e}
+#cli-header button{background:none;border:none;color:#8b949e;cursor:pointer;font-size:12px}
+#cli-header button:hover{color:var(--text)}
+#cli-output{flex:1;overflow-y:auto;padding:8px 12px;font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6}
+#cli-output .cmd{color:var(--accent)}
+#cli-output .ok{color:var(--green)}
+#cli-output .err{color:var(--red)}
+#cli-output .info{color:#8b949e}
+#cli-output .warn{color:var(--yellow)}
+#cli-output .data{color:#c9d1d9}
+#cli-input-row{display:flex;align-items:center;padding:6px 12px;border-top:1px solid var(--border);background:var(--panel)}
+#cli-prompt{color:var(--green);font-family:monospace;font-size:13px;margin-right:8px;white-space:nowrap}
+#cli-input{flex:1;background:none;border:none;color:var(--text);font-family:'Cascadia Code','Fira Code',monospace;font-size:13px;outline:none}
+#statusbar{display:flex;align-items:center;justify-content:space-between;padding:3px 12px;background:var(--panel);border-top:1px solid var(--border);font-size:11px;color:#8b949e;flex-shrink:0}
+#toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#238636;color:#fff;padding:8px 20px;border-radius:6px;font-size:14px;display:none;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#ctx-menu{position:absolute;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:4px;display:none;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#ctx-menu button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);padding:6px 16px;cursor:pointer;font-size:13px;border-radius:4px}
+#ctx-menu button:hover{background:#21262d}
+#ctx-menu .sep{height:1px;background:var(--border);margin:4px 0}
+#help-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100}
+#help-modal .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:700px;max-height:85vh;overflow-y:auto}
+#help-modal h2{color:var(--accent);margin:12px 0 8px}
+#help-modal table{width:100%;border-collapse:collapse;font-size:12px}
+#help-modal td,#help-modal th{padding:5px 8px;border:1px solid var(--border);text-align:left}
+#help-modal th{background:#21262d}
+#help-modal .close-btn{margin-top:16px;background:#21262d;border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:6px;cursor:pointer}
+#timing-panel{position:absolute;bottom:10px;left:10px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px;display:none}
+#timing-panel canvas{display:block}
+</style>
 </head>
 <body>
 
-<div id="app">
-    <div id="toolbar">
-        <div class="logo">PASTAIMY</div>
-        <button class="btn" id="btn-save">Save Scene</button>
-        <button class="btn" id="btn-load">Load Scene</button>
-        <button class="btn" id="btn-reset-cam">Reset Camera</button>
-        <div class="spacer"></div>
-        <button class="btn btn-play" id="btn-play">Play</button>
-        <button class="btn btn-stop" id="btn-stop" disabled>Stop</button>
-        <button class="btn btn-primary" id="btn-export">Export Game</button>
-    </div>
-
-    <div id="hierarchy" class="panel">
-        <div class="panel-header">
-            Hierarchy
-            <div class="add-btn-group">
-                <button class="add-btn" onclick="addObject('empty')">+ Empty</button>
-                <button class="add-btn" onclick="addObject('cube')">+ Cube</button>
-                <button class="add-btn" onclick="addObject('sprite')">+ Sprite</button>
-            </div>
-        </div>
-        <div class="panel-content" id="hier-list"></div>
-    </div>
-
-    <div id="center">
-        <div id="viewport">
-            <div id="viewport-toolbar">
-                <button class="gizmo-btn active" data-mode="translate">Move</button>
-                <button class="gizmo-btn" data-mode="rotate">Rotate</button>
-                <button class="gizmo-btn" data-mode="scale">Scale</button>
-            </div>
-            <div id="canvas-container"></div>
-        </div>
-        <div id="script-container">
-            <div id="script-header">
-                Script Editor (JavaScript)
-                <span id="script-status" style="color: #888; font-weight: normal; text-transform: none;">Ready</span>
-            </div>
-            <div id="script-editor"></div>
-            <div id="script-error"></div>
-        </div>
-    </div>
-
-    <div id="inspector" class="panel">
-        <div class="panel-header">Inspector</div>
-        <div class="panel-content" id="insp-content">
-            <p style="color: #666; text-align: center; margin-top: 20px;">Select an object</p>
-        </div>
-    </div>
+<div id="toolbar">
+<button class="run-btn" id="btn-run" onclick="toggleRun()">RUN</button>
+<button onclick="stepOnce()">STEP</button>
+<button onclick="resetSim()">RESET</button>
+<div class="sep"></div>
+<label>Speed:</label>
+<select id="speed-sel" onchange="setSpeed(this.value)">
+<option value="1000">0.5Hz</option>
+<option value="500" selected>1Hz</option>
+<option value="250">2Hz</option>
+<option value="100">5Hz</option>
+<option value="50">10Hz</option>
+<option value="16">30Hz</option>
+</select>
+<div class="sep"></div>
+<button onclick="undo()">Undo</button>
+<button onclick="clearAll()">Clear</button>
+<div class="sep"></div>
+<select id="preset-sel" onchange="loadPreset(this.value)">
+<option value="">-- Preset --</option>
+<option value="half-adder">Half Adder</option>
+<option value="full-adder">Full Adder</option>
+<option value="sr-latch">SR Latch</option>
+<option value="d-latch">D Latch</option>
+<option value="jk-toggle">JK Toggle</option>
+<option value="counter">4-bit Counter</option>
+<option value="clock-div">Clock Divider</option>
+<option value="adder4">4-bit Adder</option>
+<option value="shift-reg">Shift Register</option>
+<option value="mux-demo">MUX Demo</option>
+<option value="decoder-demo">Decoder Demo</option>
+<option value="alu-demo">ALU Demo</option>
+<option value="ram-demo">RAM Demo</option>
+<option value="traffic">Traffic Light</option>
+</select>
+<div class="sep"></div>
+<button onclick="saveCircuit()">Save</button>
+<button onclick="loadCircuit()">Load</button>
+<button onclick="toggleCLI()">CLI</button>
+<button onclick="showHelp()">Help</button>
 </div>
 
-<!-- External Libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.js"></script>
+<div id="main">
+<div id="palette">
+<h3>Input/Output</h3>
+<div class="pal-item" data-type="SWITCH"><span class="icon">SW</span>Switch</div>
+<div class="pal-item" data-type="LED"><span class="icon">LED</span>LED</div>
+<div class="pal-item" data-type="CLOCK"><span class="icon">CLK</span>Clock</div>
+<div class="pal-item" data-type="7SEG"><span class="icon">7SG</span>7-Segment</div>
+<div class="pal-item" data-type="PROBE"><span class="icon">PRB</span>Probe</div>
+<div class="pal-item" data-type="DIP4"><span class="icon">DIP</span>DIP Switch 4</div>
+<h3>Logic Gates</h3>
+<div class="pal-item" data-type="AND"><span class="icon">&amp;</span>AND</div>
+<div class="pal-item" data-type="OR"><span class="icon">|</span>OR</div>
+<div class="pal-item" data-type="NOT"><span class="icon">!</span>NOT</div>
+<div class="pal-item" data-type="NAND"><span class="icon">~&amp;</span>NAND</div>
+<div class="pal-item" data-type="NOR"><span class="icon">~|</span>NOR</div>
+<div class="pal-item" data-type="XOR"><span class="icon">^</span>XOR</div>
+<div class="pal-item" data-type="XNOR"><span class="icon">~^</span>XNOR</div>
+<div class="pal-item" data-type="BUF"><span class="icon">&gt;</span>Buffer</div>
+<div class="pal-item" data-type="TRI"><span class="icon">&gt;|</span>Tri-State</div>
+<h3>Sequential</h3>
+<div class="pal-item" data-type="DFF"><span class="icon">DFF</span>D Flip-Flop</div>
+<div class="pal-item" data-type="JKFF"><span class="icon">JK</span>JK Flip-Flop</div>
+<div class="pal-item" data-type="SRLATCH"><span class="icon">SR</span>SR Latch</div>
+<div class="pal-item" data-type="REG"><span class="icon">REG</span>Register</div>
+<div class="pal-item" data-type="COUNTER"><span class="icon">CNT</span>Counter</div>
+<div class="pal-item" data-type="SHIFTREG"><span class="icon">SRG</span>Shift Register</div>
+<h3>Combinational</h3>
+<div class="pal-item" data-type="HALFADD"><span class="icon">HA</span>Half Adder</div>
+<div class="pal-item" data-type="FULLADD"><span class="icon">FA</span>Full Adder</div>
+<div class="pal-item" data-type="MUX2"><span class="icon">MX</span>2:1 MUX</div>
+<div class="pal-item" data-type="MUX4"><span class="icon">M4</span>4:1 MUX</div>
+<div class="pal-item" data-type="DEMUX2"><span class="icon">DM</span>1:2 DEMUX</div>
+<div class="pal-item" data-type="DECODER"><span class="icon">DC</span>2-4 Decoder</div>
+<div class="pal-item" data-type="ENCODER"><span class="icon">EN</span>4-2 Encoder</div>
+<div class="pal-item" data-type="COMPARATOR"><span class="icon">CMP</span>Comparator</div>
+<div class="pal-item" data-type="ALU"><span class="icon">ALU</span>ALU</div>
+<h3>Memory</h3>
+<div class="pal-item" data-type="RAM"><span class="icon">RAM</span>RAM 16x4</div>
+<div class="pal-item" data-type="ROM"><span class="icon">ROM</span>ROM 16x4</div>
+<h3>Power</h3>
+<div class="pal-item" data-type="VCC"><span class="icon">VCC</span>VCC (1)</div>
+<div class="pal-item" data-type="GND"><span class="icon">GND</span>GND (0)</div>
+</div>
 
-<script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-    }
-</script>
+<div id="center">
+<div id="canvas-wrap">
+<canvas id="canvas"></canvas>
+<div id="props"></div>
+<div id="timing-panel"><canvas id="timing-canvas" width="300" height="120"></canvas></div>
+<div id="ctx-menu">
+<button onclick="ctxRotate()">Rotate</button>
+<button onclick="ctxCopy()">Copy</button>
+<button onclick="ctxPaste()">Paste</button>
+<div class="sep"></div>
+<button onclick="ctxDelete()" style="color:var(--red)">Delete</button>
+</div>
+</div>
 
-<script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { TransformControls } from 'three/addons/controls/TransformControls.js';
+<div id="cli-panel">
+<div id="cli-header">
+<span>CLI - type 'help' for commands</span>
+<div>
+<button onclick="clearCLI()">Clear</button>
+<button onclick="toggleCLI()">Hide</button>
+</div>
+</div>
+<div id="cli-output"></div>
+<div id="cli-input-row">
+<span id="cli-prompt">circuit&gt;</span>
+<input type="text" id="cli-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
+</div>
+</div>
+</div>
+</div>
 
-    // Core Data Structures
-    class GameObject {
-        constructor(name, type, mesh) {
-            this.id = crypto.randomUUID();
-            this.name = name;
-            this.type = type;
-            this.mesh = mesh;
-            this.transform = { x:0, y:0, z:0, rx:0, ry:0, rz:0, sx:1, sy:1, sz:1 };
-            this.script = `// Access properties via 'self.transform'\nfunction start(self) {\n    \n}\n\nfunction update(self, dt) {\n    \n}`;
-            this.syncToMesh();
-        }
-        syncToMesh() {
-            this.mesh.position.set(this.transform.x, this.transform.y, this.transform.z);
-            this.mesh.rotation.set(this.transform.rx, this.transform.ry, this.transform.rz);
-            this.mesh.scale.set(this.transform.sx, this.transform.sy, this.transform.sz);
-        }
-        syncFromMesh() {
-            this.transform.x = this.mesh.position.x; this.transform.y = this.mesh.position.y; this.transform.z = this.mesh.position.z;
-            this.transform.rx = this.mesh.rotation.x; this.transform.ry = this.mesh.rotation.y; this.transform.rz = this.mesh.rotation.z;
-            this.transform.sx = this.mesh.scale.x; this.transform.sy = this.mesh.scale.y; this.transform.sz = this.mesh.scale.z;
-        }
-        serialize() {
-            return { id: this.id, name: this.name, type: this.type, transform: {...this.transform}, script: this.script };
-        }
-    }
+<div id="statusbar">
+<span id="status-left">Ready</span>
+<span id="status-center"></span>
+<span id="status-right">Components: 0 | Wires: 0 | Tick: 0</span>
+</div>
 
-    // Engine State
-    let gameObjects = [];
-    let selectedGO = null;
-    let isPlaying = false;
-    let backupState = null;
-    let compiledScripts = [];
-    let animFrameId = null;
-    let editor = null;
-    let currentScriptError = "";
+<div id="toast"></div>
+<input type="file" id="file-input" accept=".json" style="display:none" onchange="handleFileLoad(event)">
 
-    // Three.js Setup
-    const canvasContainer = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222222);
-    
-    const camera = new THREE.PerspectiveCamera(60, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
-    const initialCamPos = new THREE.Vector3(5, 5, 5);
-    camera.position.copy(initialCamPos);
-    
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-    canvasContainer.appendChild(renderer.domElement);
+<div id="help-modal">
+<div class="modal">
+<h2>Keyboard Shortcuts</h2>
+<table>
+<tr><th>Key</th><th>Action</th></tr>
+<tr><td>Space</td><td>Run / Stop</td></tr>
+<tr><td>Delete</td><td>Delete selected</td></tr>
+<tr><td>Ctrl+Z</td><td>Undo</td></tr>
+<tr><td>Ctrl+C / Ctrl+V</td><td>Copy / Paste</td></tr>
+<tr><td>Ctrl+A</td><td>Select all</td></tr>
+<tr><td>ESC</td><td>Cancel / Deselect</td></tr>
+<tr><td>Mouse Wheel</td><td>Zoom</td></tr>
+<tr><td>Right Click</td><td>Context menu</td></tr>
+<tr><td>Double Click</td><td>Properties</td></tr>
+<tr><td>Tab (CLI)</td><td>Auto-complete</td></tr>
+<tr><td>Up/Down (CLI)</td><td>Command history</td></tr>
+</table>
+<h2>CLI Commands</h2>
+<table>
+<tr><th>Command</th><th>Description</th></tr>
+<tr><td>add TYPE X Y</td><td>Add component at position</td></tr>
+<tr><td>wire ID.PIN ID.PIN</td><td>Connect two pins</td></tr>
+<tr><td>del ID</td><td>Delete component</td></tr>
+<tr><td>delwire N</td><td>Delete wire by index</td></tr>
+<tr><td>list</td><td>List all components</td></tr>
+<tr><td>wires</td><td>List all wires</td></tr>
+<tr><td>get ID</td><td>Show component state</td></tr>
+<tr><td>set ID VAL</td><td>Set switch/value</td></tr>
+<tr><td>run / stop / step / reset</td><td>Simulation control</td></tr>
+<tr><td>speed MS</td><td>Set simulation speed</td></tr>
+<tr><td>move ID X Y</td><td>Move component</td></tr>
+<tr><td>probe ID</td><td>Show all pin values</td></tr>
+<tr><td>trace ID</td><td>Trace signal path</td></tr>
+<tr><td>dump</td><td>Dump circuit as text</td></tr>
+<tr><td>preset NAME</td><td>Load preset circuit</td></tr>
+<tr><td>save / load</td><td>Save/load circuit file</td></tr>
+<tr><td>clear / undo</td><td>Clear all / Undo</td></tr>
+<tr><td>types</td><td>List component types</td></tr>
+<tr><td>help</td><td>Show this help</td></tr>
+</table>
+<button class="close-btn" onclick="document.getElementById('help-modal').style.display='none'">Close</button>
+</div>
+</div>
 
-    const orbitControls = new OrbitControls(camera, renderer.domElement);
-    const transformControls = new TransformControls(camera, renderer.domElement);
-    scene.add(transformControls.getHelper());
+<script>
+// ============================================================
+// COMPONENT DEFINITIONS
+// ============================================================
+const COMP_DEFS={
+SWITCH:{name:'Switch',w:60,h:40,inputs:[],outputs:['out'],cat:'io'},
+LED:{name:'LED',w:40,h:40,inputs:['in'],outputs:[],cat:'io'},
+CLOCK:{name:'Clock',w:60,h:40,inputs:[],outputs:['out'],cat:'io'},
+'7SEG':{name:'7-Seg',w:60,h:80,inputs:['a','b','c','d'],outputs:[],cat:'io'},
+PROBE:{name:'Probe',w:60,h:30,inputs:['in'],outputs:[],cat:'io'},
+DIP4:{name:'DIP4',w:60,h:70,inputs:[],outputs:['b0','b1','b2','b3'],cat:'io'},
+AND:{name:'AND',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+OR:{name:'OR',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+NOT:{name:'NOT',w:50,h:40,inputs:['A'],outputs:['Y'],cat:'gate'},
+NAND:{name:'NAND',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+NOR:{name:'NOR',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+XOR:{name:'XOR',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+XNOR:{name:'XNOR',w:60,h:50,inputs:['A','B'],outputs:['Y'],cat:'gate'},
+BUF:{name:'Buffer',w:50,h:40,inputs:['A'],outputs:['Y'],cat:'gate'},
+TRI:{name:'TriState',w:60,h:50,inputs:['A','EN'],outputs:['Y'],cat:'gate'},
+DFF:{name:'D FF',w:70,h:60,inputs:['D','CLK','RST'],outputs:['Q','Qn'],cat:'seq'},
+JKFF:{name:'JK FF',w:70,h:60,inputs:['J','K','CLK','RST'],outputs:['Q','Qn'],cat:'seq'},
+SRLATCH:{name:'SR Latch',w:70,h:50,inputs:['S','R'],outputs:['Q','Qn'],cat:'seq'},
+REG:{name:'Register',w:70,h:60,inputs:['D','CLK','RST'],outputs:['Q'],cat:'seq'},
+COUNTER:{name:'Counter',w:70,h:60,inputs:['CLK','RST'],outputs:['Q0','Q1','Q2','Q3'],cat:'seq'},
+SHIFTREG:{name:'ShiftReg',w:80,h:60,inputs:['DIN','CLK','RST'],outputs:['Q0','Q1','Q2','Q3'],cat:'seq'},
+HALFADD:{name:'HalfAdd',w:70,h:50,inputs:['A','B'],outputs:['S','C'],cat:'comb'},
+FULLADD:{name:'FullAdd',w:70,h:60,inputs:['A','B','Cin'],outputs:['S','Cout'],cat:'comb'},
+MUX2:{name:'2:1 MUX',w:60,h:60,inputs:['I0','I1','SEL'],outputs:['Y'],cat:'comb'},
+MUX4:{name:'4:1 MUX',w:70,h:80,inputs:['I0','I1','I2','I3','S0','S1'],outputs:['Y'],cat:'comb'},
+DEMUX2:{name:'1:2 DEMUX',w:60,h:60,inputs:['I','SEL'],outputs:['Y0','Y1'],cat:'comb'},
+DECODER:{name:'2-4 Dec',w:70,h:60,inputs:['A','B'],outputs:['Y0','Y1','Y2','Y3'],cat:'comb'},
+ENCODER:{name:'4-2 Enc',w:70,h:60,inputs:['I0','I1','I2','I3'],outputs:['A','B'],cat:'comb'},
+COMPARATOR:{name:'Compare',w:60,h:60,inputs:['A','B'],outputs:['EQ','GT','LT'],cat:'comb'},
+ALU:{name:'ALU',w:70,h:70,inputs:['A','B','OP0','OP1'],outputs:['Y','Cout','Z'],cat:'comb'},
+RAM:{name:'RAM',w:80,h:70,inputs:['D','ADDR','CLK','WE'],outputs:['Q'],cat:'mem'},
+ROM:{name:'ROM',w:80,h:60,inputs:['ADDR'],outputs:['Q'],cat:'mem'},
+VCC:{name:'VCC',w:40,h:30,inputs:[],outputs:['out'],cat:'misc'},
+GND:{name:'GND',w:40,h:30,inputs:[],outputs:['out'],cat:'misc'},
+};
 
-    transformControls.addEventListener('dragging-changed', (event) => {
-        orbitControls.enabled = !event.value;
-    });
-    transformControls.addEventListener('change', () => {
-        if (selectedGO) {
-            selectedGO.syncFromMesh();
-            updateInspector();
-        }
-    });
+// ============================================================
+// STATE
+// ============================================================
+let comps=[];
+let wires=[];
+let nextId=1;
+let running=false;
+let simTimer=null;
+let simSpeed=500;
+let tickCount=0;
+let prevClockSignals={};
+let camera={x:0,y:0,zoom:1};
+let mode='idle';
+let placingType=null;
+let selected=[];
+let dragOffset=null;
+let wireStart=null;
+let wireStartPin=null;
+let mousePos={x:0,y:0};
+let selectionBox=null;
+let clipboard=[];
+let undoStack=[];
+let ctxTarget=null;
+let cliHistory=[];
+let cliHistIdx=-1;
+let timingData=[];
+let traceTargets=[];
 
-    // Lighting & Grid
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 10, 7.5);
-    scene.add(dirLight);
-    scene.add(new THREE.GridHelper(20, 20, 0x444444, 0x333333));
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
 
-    // Resize Handler
-    function onWindowResize() {
-        camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-    }
-    window.addEventListener('resize', onWindowResize);
+function resizeCanvas(){
+const wrap=document.getElementById('canvas-wrap');
+canvas.width=wrap.clientWidth;
+canvas.height=wrap.clientHeight;
+render();
+}
+window.addEventListener('resize',resizeCanvas);
 
-    // UI Logic
-    function addObject(type) {
-        let mesh;
-        if (type === 'cube') mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({ color: 0x007acc }));
-        else if (type === 'sprite') mesh = new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial({ color: 0xffcc00, side: THREE.DoubleSide }));
-        else mesh = new THREE.Object3D();
-        
-        scene.add(mesh);
-        const go = new GameObject(`${type}_${gameObjects.length + 1}`, type, mesh);
-        gameObjects.push(go);
-        selectObject(go);
-    }
-    window.addObject = addObject;
+function toScreen(wx,wy){return{x:(wx-camera.x)*camera.zoom,y:(wy-camera.y)*camera.zoom}}
+function toWorld(sx,sy){return{x:sx/camera.zoom+camera.x,y:sy/camera.zoom+camera.y}}
 
-    function selectObject(go) {
-        selectedGO = go;
-        if (go) {
-            transformControls.attach(go.mesh);
-            if (editor) editor.setValue(go.script);
-            clearScriptError();
-        } else {
-            transformControls.detach();
-            if (editor) editor.setValue("");
-        }
-        updateHierarchy();
-        updateInspector();
-    }
+function getPinPos(comp,pinType,pinName){
+const def=COMP_DEFS[comp.type];
+const list=pinType==='in'?def.inputs:def.outputs;
+const idx=list.indexOf(pinName);
+if(idx<0)return null;
+const count=list.length;
+const spacing=def.h/(count+1);
+const y=comp.y+spacing*(idx+1);
+const x=pinType==='in'?comp.x:comp.x+def.w;
+return{x,y};
+}
 
-    function updateHierarchy() {
-        const list = document.getElementById('hier-list');
-        list.innerHTML = '';
-        gameObjects.forEach(go => {
-            const div = document.createElement('div');
-            div.className = `hier-item ${go === selectedGO ? 'selected' : ''}`;
-            div.textContent = go.name;
-            div.onclick = () => selectObject(go);
-            list.appendChild(div);
-        });
-    }
+function createComp(type,x,y){
+const def=COMP_DEFS[type];
+if(!def)return null;
+const comp={id:nextId++,type,x,y,state:{},inputs:{},outputs:{}};
+def.inputs.forEach(p=>comp.inputs[p]=0);
+def.outputs.forEach(p=>comp.outputs[p]=0);
+if(type==='SWITCH')comp.state.on=false;
+if(type==='CLOCK')comp.state.phase=0;
+if(type==='DIP4')comp.state.bits=[0,0,0,0];
+if(type==='RAM'){comp.state.mem=new Array(16).fill(0);}
+if(type==='ROM'){comp.state.mem=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];}
+if(type==='COUNTER')comp.state.count=0;
+if(type==='SHIFTREG')comp.state.bits=[0,0,0,0];
+if(type==='DFF'||type==='JKFF'||type==='REG')comp.state.q=0;
+if(type==='SRLATCH')comp.state.q=0;
+return comp;
+}
 
-    function updateInspector() {
-        const content = document.getElementById('insp-content');
-        if (!selectedGO) {
-            content.innerHTML = `<p style="color: #666; text-align: center; margin-top: 20px;">Select an object</p>`;
-            return;
-        }
-        const t = selectedGO.transform;
-        content.innerHTML = `
-            <div class="insp-section">
-                <div class="insp-title">${selectedGO.name} (Transform)</div>
-                <div class="insp-row"><span class="insp-label">Position</span><div class="xyz-group">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-x" data-prop="x" value="${t.x.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-y" data-prop="y" value="${t.y.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-z" data-prop="z" value="${t.z.toFixed(2)}">
-                </div></div>
-                <div class="insp-row"><span class="insp-label">Rotation</span><div class="xyz-group">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-x" data-prop="rx" value="${t.rx.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-y" data-prop="ry" value="${t.ry.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-z" data-prop="rz" value="${t.rz.toFixed(2)}">
-                </div></div>
-                <div class="insp-row"><span class="insp-label">Scale</span><div class="xyz-group">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-x" data-prop="sx" value="${t.sx.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-y" data-prop="sy" value="${t.sy.toFixed(2)}">
-                    <input type="number" step="0.1" class="insp-input xyz-input xyz-z" data-prop="sz" value="${t.sz.toFixed(2)}">
-                </div></div>
-            </div>
-        `;
-        content.querySelectorAll('.insp-input').forEach(input => {
-            input.oninput = (e) => {
-                selectedGO.transform[e.target.dataset.prop] = parseFloat(e.target.value) || 0;
-                selectedGO.syncToMesh();
-            };
-        });
-    }
+// ============================================================
+// SIMULATION
+// ============================================================
+function evaluate(comp){
+const inp=comp.inputs;
+const out=comp.outputs;
+const prev=prevClockSignals[comp.id]||{};
+const rising=(pin)=>inp[pin]===1&&(prev[pin]===0||prev[pin]===undefined);
 
-    // Gizmo Mode Switching
-    document.querySelectorAll('.gizmo-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.gizmo-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            transformControls.setMode(btn.dataset.mode);
-        };
-    });
+switch(comp.type){
+case 'SWITCH':out.out=comp.state.on?1:0;break;
+case 'CLOCK':out.out=comp.state.phase?1:0;break;
+case 'VCC':out.out=1;break;
+case 'GND':out.out=0;break;
+case 'DIP4':out.b0=comp.state.bits[0];out.b1=comp.state.bits[1];out.b2=comp.state.bits[2];out.b3=comp.state.bits[3];break;
+case 'AND':out.Y=inp.A&inp.B;break;
+case 'OR':out.Y=inp.A|inp.B;break;
+case 'NOT':out.Y=inp.A?0:1;break;
+case 'NAND':out.Y=(inp.A&inp.B)?0:1;break;
+case 'NOR':out.Y=(inp.A|inp.B)?0:1;break;
+case 'XOR':out.Y=inp.A^inp.B;break;
+case 'XNOR':out.Y=(inp.A^inp.B)?0:1;break;
+case 'BUF':out.Y=inp.A;break;
+case 'TRI':out.Y=inp.EN?inp.A:0;break;
+case 'HALFADD':out.S=inp.A^inp.B;out.C=inp.A&inp.B;break;
+case 'FULLADD':{out.S=inp.A^inp.B^inp.Cin;out.Cout=(inp.A&inp.B)|(inp.B&inp.Cin)|(inp.A&inp.Cin);break;}
+case 'MUX2':out.Y=inp.SEL?inp.I1:inp.I0;break;
+case 'MUX4':{const s=inp.S0|(inp.S1<<1);out.Y=[inp.I0,inp.I1,inp.I2,inp.I3][s];break;}
+case 'DEMUX2':out.Y0=inp.SEL?0:inp.I;out.Y1=inp.SEL?inp.I:0;break;
+case 'DECODER':{const v=inp.A|(inp.B<<1);out.Y0=v===0?1:0;out.Y1=v===1?1:0;out.Y2=v===2?1:0;out.Y3=v===3?1:0;break;}
+case 'ENCODER':{let a=0,b=0;if(inp.I1)a=1;if(inp.I2){b=1;}if(inp.I3){a=1;b=1;}out.A=a;out.B=b;break;}
+case 'COMPARATOR':{out.EQ=inp.A===inp.B?1:0;out.GT=inp.A>inp.B?1:0;out.LT=inp.A<inp.B?1:0;break;}
+case 'ALU':{const op=inp.OP0|(inp.OP1<<1);let r=0;
+if(op===0)r=inp.A+inp.B;else if(op===1)r=inp.A-inp.B;else if(op===2)r=inp.A&inp.B;else r=inp.A|inp.B;
+out.Y=r&15;out.Cout=(r>15)?1:0;out.Z=(out.Y===0)?1:0;break;}
+case 'DFF':{if(inp.RST)comp.state.q=0;else if(rising('CLK'))comp.state.q=inp.D;out.Q=comp.state.q;out.Qn=comp.state.q?0:1;break;}
+case 'JKFF':{if(inp.RST)comp.state.q=0;else if(rising('CLK')){
+if(inp.J&&inp.K)comp.state.q=comp.state.q?0:1;else if(inp.J)comp.state.q=1;else if(inp.K)comp.state.q=0;}
+out.Q=comp.state.q;out.Qn=comp.state.q?0:1;break;}
+case 'SRLATCH':{if(inp.S&&inp.R)comp.state.q=0;else if(inp.S)comp.state.q=1;else if(inp.R)comp.state.q=0;out.Q=comp.state.q;out.Qn=comp.state.q?0:1;break;}
+case 'REG':{if(inp.RST)comp.state.q=0;else if(rising('CLK'))comp.state.q=inp.D;out.Q=comp.state.q;break;}
+case 'COUNTER':{if(inp.RST)comp.state.count=0;else if(rising('CLK'))comp.state.count=(comp.state.count+1)%16;
+const c=comp.state.count;out.Q0=(c>>0)&1;out.Q1=(c>>1)&1;out.Q2=(c>>2)&1;out.Q3=(c>>3)&1;break;}
+case 'SHIFTREG':{if(inp.RST)comp.state.bits=[0,0,0,0];else if(rising('CLK')){
+comp.state.bits=[inp.DIN,comp.state.bits[0],comp.state.bits[1],comp.state.bits[2]];}
+out.Q0=comp.state.bits[0];out.Q1=comp.state.bits[1];out.Q2=comp.state.bits[2];out.Q3=comp.state.bits[3];break;}
+case 'RAM':{if(rising('CLK')&&inp.WE){comp.state.mem[inp.ADDR&15]=inp.D&15;}out.Q=comp.state.mem[inp.ADDR&15];break;}
+case 'ROM':{out.Q=comp.state.mem[inp.ADDR&15];break;}
+}
+prevClockSignals[comp.id]={...inp};
+}
 
-    // Script Editor (Monaco)
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
-    require(['vs/editor/editor.main'], function () {
-        editor = monaco.editor.create(document.getElementById('script-editor'), {
-            value: '', language: 'javascript', theme: 'vs-dark', automaticLayout: true, minimap: { enabled: false }
-        });
-        editor.onDidChangeModelContent(() => {
-            if (selectedGO) selectedGO.script = editor.getValue();
-        });
-    });
+function simulate(){
+comps.forEach(c=>{if(c.type==='CLOCK')c.state.phase=c.state.phase?0:1;});
+for(let pass=0;pass<6;pass++){
+comps.forEach(c=>{COMP_DEFS[c.type].inputs.forEach(p=>c.inputs[p]=0);});
+wires.forEach(w=>{
+const fc=comps.find(c=>c.id===w.fromId);
+const tc=comps.find(c=>c.id===w.toId);
+if(fc&&tc){tc.inputs[w.toPin]=fc.outputs[w.fromPin]||0;}
+});
+comps.forEach(c=>evaluate(c));
+}
+tickCount++;
+recordTiming();
+}
 
-    function showScriptError(msg) {
-        const errDiv = document.getElementById('script-error');
-        const status = document.getElementById('script-status');
-        errDiv.textContent = `Error: ${msg}`;
-        errDiv.style.display = 'block';
-        status.textContent = "Compilation Error";
-        status.style.color = "var(--error)";
-    }
+function recordTiming(){
+if(traceTargets.length===0)return;
+const entry={tick:tickCount};
+traceTargets.forEach(id=>{
+const c=comps.find(x=>x.id===id);
+if(c){
+COMP_DEFS[c.type].outputs.forEach(p=>{entry[id+'.'+p]=c.outputs[p]||0;});
+}
+});
+timingData.push(entry);
+if(timingData.length>200)timingData.shift();
+}
 
-    function clearScriptError() {
-        document.getElementById('script-error').style.display = 'none';
-        const status = document.getElementById('script-status');
-        status.textContent = "Ready";
-        status.style.color = "#888";
-    }
+function toggleRun(){
+running=!running;
+const btn=document.getElementById('btn-run');
+if(running){btn.textContent='STOP';btn.classList.add('active');
+simTimer=setInterval(()=>{simulate();render();},simSpeed);
+cliPrint('Simulation started','ok');
+}else{btn.textContent='RUN';btn.classList.remove('active');clearInterval(simTimer);
+cliPrint('Simulation stopped','info');}
+}
 
-    // Play / Stop Logic
-    document.getElementById('btn-play').onclick = () => {
-        isPlaying = true;
-        backupState = JSON.stringify(gameObjects.map(go => go.serialize()));
-        transformControls.detach(); 
-        clearScriptError();
-        
-        compiledScripts = gameObjects.map(go => {
-            try {
-                const factory = new Function(go.script + '\nreturn { start, update };');
-                return { go, methods: factory() };
-            } catch (e) { 
-                showScriptError(`${go.name}: ${e.message}`);
-                return { go, methods: { start:()=>{}, update:()=>{} } }; 
-            }
-        });
+function stepOnce(){simulate();render();cliPrint('Step executed. Tick: '+tickCount,'info');}
+function resetSim(){tickCount=0;prevClockSignals={};timingData=[];
+comps.forEach(c=>{
+if(c.type==='CLOCK')c.state.phase=0;
+if(c.type==='COUNTER')c.state.count=0;
+if(c.type==='SHIFTREG')c.state.bits=[0,0,0,0];
+if(c.type==='DFF'||c.type==='JKFF'||c.type==='REG')c.state.q=0;
+if(c.type==='SRLATCH')c.state.q=0;
+});
+simulate();render();cliPrint('Simulation reset','ok');}
 
-        if (document.getElementById('script-error').style.display === 'block') {
-            isPlaying = false;
-            return;
-        }
+function setSpeed(ms){simSpeed=parseInt(ms);
+if(running){clearInterval(simTimer);simTimer=setInterval(()=>{simulate();render();},simSpeed);}}
 
-        compiledScripts.forEach(({ go, methods }) => {
-            try {
-                methods.start({ transform: go.transform, gameObject: go });
-                go.syncToMesh();
-            } catch (e) { showScriptError(`Runtime error in start() of ${go.name}: ${e.message}`); }
-        });
+// ============================================================
+// RENDERING
+// ============================================================
+function render(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle='#0d1117';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+drawGrid();
+ctx.save();
+ctx.translate(-camera.x*camera.zoom,-camera.y*camera.zoom);
+ctx.scale(camera.zoom,camera.zoom);
+wires.forEach(w=>drawWire(w));
+if(mode==='wiring'&&wireStart){
+ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;ctx.setLineDash([5,5]);
+ctx.beginPath();const wp=toWorld(mousePos.x,mousePos.y);
+ctx.moveTo(wireStart.x,wireStart.y);ctx.lineTo(wp.x,wp.y);ctx.stroke();ctx.setLineDash([]);
+}
+comps.forEach(c=>drawComp(c));
+if(selectionBox){
+ctx.strokeStyle='#58a6ff';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+ctx.strokeRect(selectionBox.x,selectionBox.y,selectionBox.w,selectionBox.h);
+ctx.fillStyle='rgba(88,166,255,0.1)';
+ctx.fillRect(selectionBox.x,selectionBox.y,selectionBox.w,selectionBox.h);
+ctx.setLineDash([]);
+}
+ctx.restore();
+document.getElementById('status-right').textContent=
+'Components: '+comps.length+' | Wires: '+wires.length+' | Tick: '+tickCount;
+}
 
-        document.getElementById('btn-play').disabled = true;
-        document.getElementById('btn-stop').disabled = false;
-        
-        let lastTime = performance.now();
-        function animate() {
-            if (!isPlaying) return;
-            animFrameId = requestAnimationFrame(animate);
-            const dt = (performance.now() - lastTime) / 1000;
-            lastTime = performance.now();
+function drawGrid(){
+const gs=20*camera.zoom;
+const ox=(-camera.x*camera.zoom)%gs;
+const oy=(-camera.y*camera.zoom)%gs;
+ctx.strokeStyle='#161b22';ctx.lineWidth=1;ctx.beginPath();
+for(let x=ox;x<canvas.width;x+=gs){ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);}
+for(let y=oy;y<canvas.height;y+=gs){ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);}
+ctx.stroke();
+}
 
-            compiledScripts.forEach(({ go, methods }) => {
-                try {
-                    methods.update({ transform: go.transform, gameObject: go }, dt);
-                    go.syncToMesh();
-                } catch (e) { 
-                    showScriptError(`Runtime error in update() of ${go.name}: ${e.message}`);
-                    isPlaying = false; 
-                }
-            });
-            renderer.render(scene, camera);
-        }
-        animate();
-    };
+function drawWire(w){
+const fc=comps.find(c=>c.id===w.fromId);
+const tc=comps.find(c=>c.id===w.toId);
+if(!fc||!tc)return;
+const fp=getPinPos(fc,'out',w.fromPin);
+const tp=getPinPos(tc,'in',w.toPin);
+if(!fp||!tp)return;
+const val=fc.outputs[w.fromPin]||0;
+const isSel=selected.includes(w);
+ctx.strokeStyle=isSel?'#58a6ff':(val?'#3fb950':'#484f58');
+ctx.lineWidth=isSel?3:2;
+ctx.beginPath();
+const dx=Math.abs(tp.x-fp.x)*0.5;
+ctx.moveTo(fp.x,fp.y);
+ctx.bezierCurveTo(fp.x+dx,fp.y,tp.x-dx,tp.y,tp.x,tp.y);
+ctx.stroke();
+}
 
-    document.getElementById('btn-stop').onclick = () => {
-        isPlaying = false;
-        cancelAnimationFrame(animFrameId);
-        
-        const states = JSON.parse(backupState);
-        gameObjects.forEach((go, i) => {
-            Object.assign(go.transform, states[i].transform);
-            go.syncToMesh();
-        });
-        
-        if (selectedGO) transformControls.attach(selectedGO.mesh);
-        document.getElementById('btn-play').disabled = false;
-        document.getElementById('btn-stop').disabled = true;
-        updateInspector();
-        renderer.render(scene, camera);
-    };
+function drawComp(comp){
+const def=COMP_DEFS[comp.type];
+const isSel=selected.includes(comp);
+const x=comp.x,y=comp.y,w=def.w,h=def.h;
+const colors={io:'#1a2332',gate:'#1a2a1a',seq:'#2a1a2a',comb:'#1a2a2a',mem:'#2a2a1a',misc:'#222'};
+ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(x+3,y+3,w,h);
+ctx.fillStyle=colors[def.cat]||'#1a1a2a';
+ctx.strokeStyle=isSel?'#58a6ff':'#30363d';
+ctx.lineWidth=isSel?2:1;
 
-    // Save / Load Scene
-    document.getElementById('btn-save').onclick = () => {
-        const data = gameObjects.map(go => go.serialize());
-        localStorage.setItem('pastaimy_scene', JSON.stringify(data));
-        alert('Scene saved successfully.');
-    };
+if(comp.type==='AND'||comp.type==='NAND'){
+ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w*0.6,y);
+ctx.arc(x+w*0.6,y+h/2,h/2,-Math.PI/2,Math.PI/2);
+ctx.lineTo(x,y+h);ctx.closePath();ctx.fill();ctx.stroke();
+}else if(comp.type==='OR'||comp.type==='NOR'||comp.type==='XOR'||comp.type==='XNOR'){
+ctx.beginPath();ctx.moveTo(x,y);
+ctx.quadraticCurveTo(x+w*0.7,y,x+w,y+h/2);
+ctx.quadraticCurveTo(x+w*0.7,y+h,x,y+h);
+ctx.quadraticCurveTo(x+w*0.3,y+h/2,x,y);
+ctx.closePath();ctx.fill();ctx.stroke();
+if(comp.type==='XOR'||comp.type==='XNOR'){
+ctx.beginPath();ctx.moveTo(x-5,y);
+ctx.quadraticCurveTo(x+w*0.3-5,y+h/2,x-5,y+h);ctx.stroke();}
+}else if(comp.type==='NOT'||comp.type==='BUF'||comp.type==='TRI'){
+ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w,y+h/2);ctx.lineTo(x,y+h);
+ctx.closePath();ctx.fill();ctx.stroke();
+if(comp.type==='NOT'){ctx.beginPath();ctx.arc(x+w+4,y+h/2,4,0,Math.PI*2);ctx.fill();ctx.stroke();}
+}else{
+roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();
+}
+if(comp.type==='NAND'||comp.type==='NOR'||comp.type==='XNOR'){
+ctx.beginPath();ctx.arc(x+w+4,y+h/2,4,0,Math.PI*2);
+ctx.fillStyle=colors[def.cat];ctx.fill();ctx.stroke();}
 
-    document.getElementById('btn-load').onclick = () => {
-        const dataStr = localStorage.getItem('pastaimy_scene');
-        if (!dataStr) { alert('No saved scene found.'); return; }
-        
-        // Clear current scene
-        gameObjects.forEach(go => scene.remove(go.mesh));
-        gameObjects = [];
-        
-        const data = JSON.parse(dataStr);
-        data.forEach(d => {
-            let mesh;
-            if (d.type === 'cube') mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({ color: 0x007acc }));
-            else if (d.type === 'sprite') mesh = new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial({ color: 0xffcc00, side: THREE.DoubleSide }));
-            else mesh = new THREE.Object3D();
-            
-            scene.add(mesh);
-            const go = new GameObject(d.name, d.type, mesh);
-            go.transform = d.transform;
-            go.script = d.script;
-            go.syncToMesh();
-            gameObjects.push(go);
-        });
-        selectObject(null);
-        updateHierarchy();
-    };
+ctx.fillStyle='#c9d1d9';ctx.font='bold 10px Segoe UI';
+ctx.textAlign='center';ctx.textBaseline='middle';
+let label=def.name;
+if(comp.type==='COUNTER')label='CNT:'+comp.state.count;
+if(comp.type==='PROBE')label='='+comp.inputs.in;
+if(comp.type==='SWITCH')label=comp.state.on?'ON':'OFF';
+if(comp.type==='CLOCK')label=comp.state.phase?'HIGH':'LOW';
+ctx.fillText(label,x+w/2,y+h/2);
 
-    document.getElementById('btn-reset-cam').onclick = () => {
-        camera.position.copy(initialCamPos);
-        orbitControls.target.set(0, 0, 0);
-        orbitControls.update();
-    };
+if(comp.type==='LED'){
+const on=comp.inputs.in;
+ctx.beginPath();ctx.arc(x+w/2,y+h/2,12,0,Math.PI*2);
+ctx.fillStyle=on?'#ff4444':'#333';ctx.fill();
+if(on){ctx.shadowColor='#ff4444';ctx.shadowBlur=15;ctx.fill();ctx.shadowBlur=0;}
+ctx.strokeStyle='#666';ctx.lineWidth=1;ctx.stroke();
+}
+if(comp.type==='7SEG'){
+const val=comp.inputs.a|(comp.inputs.b<<1)|(comp.inputs.c<<2)|(comp.inputs.d<<3);
+draw7Seg(x+w/2,y+h/2,get7Seg(val));
+}
+if(comp.type==='SWITCH'){
+const on=comp.state.on;
+ctx.fillStyle=on?'#3fb950':'#484f58';
+roundRect(x+10,y+8,w-20,h-16,4);ctx.fill();
+ctx.fillStyle='#fff';ctx.beginPath();
+ctx.arc(on?x+w-18:x+18,y+h/2,7,0,Math.PI*2);ctx.fill();
+}
+if(comp.type==='DIP4'){
+for(let i=0;i<4;i++){
+const by=y+10+i*15;
+ctx.fillStyle=comp.state.bits[i]?'#3fb950':'#484f58';
+ctx.fillRect(x+10,by,w-20,10);
+ctx.fillStyle='#fff';ctx.font='8px monospace';
+ctx.fillText(''+comp.state.bits[i],x+w/2,by+5);
+}
+}
+if(comp.type==='SHIFTREG'){
+ctx.fillStyle='#8b949e';ctx.font='9px monospace';
+ctx.fillText(comp.state.bits.join(''),x+w/2,y+h-8);
+}
 
-    // Export Logic
-    document.getElementById('btn-export').onclick = () => {
-        const zip = new JSZip();
-        const sceneData = gameObjects.map(go => go.serialize());
-        
-        const runtimeJS = `
-            import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-            
-            const SCENE_DATA = ${JSON.stringify(sceneData)};
-            
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(5, 5, 5);
-            
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-            
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-            dirLight.position.set(5, 10, 7.5);
-            scene.add(dirLight);
-            
-            const gameObjects = [];
-            SCENE_DATA.forEach(data => {
-                let mesh;
-                if (data.type === 'cube') mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({ color: 0x007acc }));
-                else if (data.type === 'sprite') mesh = new THREE.Mesh(new THREE.PlaneGeometry(), new THREE.MeshBasicMaterial({ color: 0xffcc00, side: THREE.DoubleSide }));
-                else mesh = new THREE.Object3D();
-                scene.add(mesh);
-                gameObjects.push({ ...data, mesh });
-            });
+def.inputs.forEach(pin=>{
+const pos=getPinPos(comp,'in',pin);
+const val=comp.inputs[pin]||0;
+ctx.beginPath();ctx.arc(pos.x,pos.y,4,0,Math.PI*2);
+ctx.fillStyle=val?'#3fb950':'#484f58';ctx.fill();
+ctx.strokeStyle='#8b949e';ctx.lineWidth=1;ctx.stroke();
+ctx.fillStyle='#8b949e';ctx.font='9px Segoe UI';ctx.textAlign='left';
+ctx.fillText(pin,pos.x+6,pos.y);
+});
+def.outputs.forEach(pin=>{
+const pos=getPinPos(comp,'out',pin);
+const val=comp.outputs[pin]||0;
+ctx.beginPath();ctx.arc(pos.x,pos.y,4,0,Math.PI*2);
+ctx.fillStyle=val?'#3fb950':'#484f58';ctx.fill();
+ctx.strokeStyle='#8b949e';ctx.lineWidth=1;ctx.stroke();
+ctx.fillStyle='#8b949e';ctx.font='9px Segoe UI';ctx.textAlign='right';
+ctx.fillText(pin,pos.x-6,pos.y);
+});
+ctx.textAlign='center';
+}
 
-            const compiled = gameObjects.map(go => {
-                try { 
-                    const f = new Function(go.script + '\\nreturn { start, update };'); 
-                    return { go, m: f() }; 
-                } catch(e) { 
-                    console.error("Script error in " + go.name, e); 
-                    return { go, m: { start:()=>{}, update:()=>{} } }; 
-                }
-            });
-            
-            compiled.forEach(({go, m}) => { 
-                m.start({transform: go.transform, gameObject: go}); 
-                go.mesh.position.set(go.transform.x, go.transform.y, go.transform.z); 
-                go.mesh.rotation.set(go.transform.rx, go.transform.ry, go.transform.rz); 
-                go.mesh.scale.set(go.transform.sx, go.transform.sy, go.transform.sz); 
-            });
+function roundRect(x,y,w,h,r){
+ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);
+ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);
+ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);
+ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
 
-            let lastTime = performance.now();
-            function animate() {
-                requestAnimationFrame(animate);
-                const dt = (performance.now() - lastTime) / 1000; 
-                lastTime = performance.now();
-                
-                compiled.forEach(({go, m}) => { 
-                    try {
-                        m.update({transform: go.transform, gameObject: go}, dt); 
-                        go.mesh.position.set(go.transform.x, go.transform.y, go.transform.z); 
-                        go.mesh.rotation.set(go.transform.rx, go.transform.ry, go.transform.rz); 
-                        go.mesh.scale.set(go.transform.sx, go.transform.sy, go.transform.sz); 
-                    } catch(e) { console.error("Runtime error in " + go.name, e); }
-                });
-                renderer.render(scene, camera);
-            }
-            animate();
-            
-            window.addEventListener('resize', () => { 
-                camera.aspect = window.innerWidth / window.innerHeight; 
-                camera.updateProjectionMatrix(); 
-                renderer.setSize(window.innerWidth, window.innerHeight); 
-            });
-        `;
+function get7Seg(val){
+const s=[[1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],
+[0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],
+[1,1,1,1,1,1,1],[1,1,1,1,0,1,1],[1,1,1,0,1,1,1],[0,0,1,1,1,1,1],
+[1,0,0,1,1,1,0],[0,1,1,1,1,0,1],[1,0,0,1,1,1,1],[1,0,0,0,1,1,1]];
+return s[val&15];
+}
 
-        const htmlTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pastaimy Game</title>
-    <style>body{margin:0;overflow:hidden;background:#222;}</style>
-</head>
-<body>
-    <script type="importmap">
-        {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
-    </script>
-    <script type="module" src="game.js"></script>
-</body>
-</html>`;
+function draw7Seg(cx,cy,segs){
+const s=12,t=3;
+const pos=[[cx-s/2,cy-s,s,t],[cx+s/2,cy-s,t,s],[cx+s/2,cy,t,s],[cx-s/2,cy+s,s,t],
+[cx-s/2,cy,t,s],[cx-s/2,cy-s,t,s],[cx-s/2,cy-t/2,s,t]];
+pos.forEach((p,i)=>{ctx.fillStyle=segs[i]?'#ff3333':'#331111';ctx.fillRect(p[0],p[1],p[2],p[3]);});
+}
 
-        zip.file('game.js', runtimeJS);
-        zip.file('index.html', htmlTemplate);
-        
-        zip.generateAsync({ type: "blob" }).then(content => {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = 'Pastaimy_Game_Build.zip';
-            link.click();
-        });
-    };
+// ============================================================
+// HIT TESTING
+// ============================================================
+function hitComp(wx,wy){
+for(let i=comps.length-1;i>=0;i--){
+const c=comps[i];const def=COMP_DEFS[c.type];
+if(wx>=c.x&&wx<=c.x+def.w&&wy>=c.y&&wy<=c.y+def.h)return c;
+}return null;
+}
+function hitPin(wx,wy){
+for(const c of comps){const def=COMP_DEFS[c.type];
+for(const pin of def.inputs){const pos=getPinPos(c,'in',pin);
+if(pos&&Math.hypot(wx-pos.x,wy-pos.y)<8)return{comp:c,pin,type:'in'};}
+for(const pin of def.outputs){const pos=getPinPos(c,'out',pin);
+if(pos&&Math.hypot(wx-pos.x,wy-pos.y)<8)return{comp:c,pin,type:'out'};}
+}return null;
+}
+function hitWire(wx,wy){
+for(const w of wires){
+const fc=comps.find(c=>c.id===w.fromId);const tc=comps.find(c=>c.id===w.toId);
+if(!fc||!tc)continue;
+const fp=getPinPos(fc,'out',w.fromPin);const tp=getPinPos(tc,'in',w.toPin);
+if(!fp||!tp)continue;
+for(let t=0;t<=1;t+=0.05){
+const dx=Math.abs(tp.x-fp.x)*0.5;
+const bx=bez(fp.x,fp.x+dx,tp.x-dx,tp.x,t);
+const by=bez(fp.y,fp.y,tp.y,tp.y,t);
+if(Math.hypot(wx-bx,wy-by)<6)return w;
+}}return null;
+}
+function bez(p0,p1,p2,p3,t){const mt=1-t;return mt*mt*mt*p0+3*mt*mt*t*p1+3*mt*t*t*p2+t*t*t*p3;}
 
-    // Initial Render Loop
-    function renderLoop() {
-        requestAnimationFrame(renderLoop);
-        if (!isPlaying) renderer.render(scene, camera);
-    }
-    renderLoop();
+// ============================================================
+// MOUSE EVENTS
+// ============================================================
+canvas.addEventListener('mousedown',e=>{
+const rect=canvas.getBoundingClientRect();
+const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+const wp=toWorld(sx,sy);
+hideCtxMenu();
 
+if(e.button===2){e.preventDefault();
+const comp=hitComp(wp.x,wp.y);
+if(comp){ctxTarget=comp;showCtxMenu(e.clientX,e.clientY);}return;}
+
+if(mode==='placing'&&placingType){
+saveUndo();
+const def=COMP_DEFS[placingType];
+const comp=createComp(placingType,wp.x-def.w/2,wp.y-def.h/2);
+comps.push(comp);
+mode='idle';placingType=null;
+setStatus('Placed '+def.name);render();return;}
+
+const pin=hitPin(wp.x,wp.y);
+if(pin){
+if(mode==='wiring'){
+if(wireStartPin.type==='out'&&pin.type==='in'&&wireStartPin.comp.id!==pin.comp.id){
+saveUndo();wires.push({fromId:wireStartPin.comp.id,fromPin:wireStartPin.pin,toId:pin.comp.id,toPin:pin.pin});
+}else if(wireStartPin.type==='in'&&pin.type==='out'&&wireStartPin.comp.id!==pin.comp.id){
+saveUndo();wires.push({fromId:pin.comp.id,fromPin:pin.pin,toId:wireStartPin.comp.id,toPin:wireStartPin.pin});
+}
+mode='idle';wireStart=null;wireStartPin=null;render();
+}else{
+mode='wiring';wireStart={x:wp.x,y:wp.y};wireStartPin=pin;
+setStatus('Wiring... click target pin');}
+return;}
+
+const comp=hitComp(wp.x,wp.y);
+if(comp){
+if(comp.type==='SWITCH'){comp.state.on=!comp.state.on;render();return;}
+if(comp.type==='DIP4'){
+const def=COMP_DEFS['DIP4'];
+const relY=wp.y-comp.y;
+const idx=Math.floor((relY-10)/15);
+if(idx>=0&&idx<4){comp.state.bits[idx]=comp.state.bits[idx]?0:1;render();return;}
+}
+if(e.shiftKey){
+if(selected.includes(comp))selected=selected.filter(s=>s!==comp);else selected.push(comp);
+render();return;}
+if(!selected.includes(comp))selected=[comp];
+mode='dragging';
+dragOffset=selected.map(s=>({comp:s,dx:s.x-wp.x,dy:s.y-wp.y}));
+render();return;}
+
+const wire=hitWire(wp.x,wp.y);
+if(wire){selected=[wire];render();return;}
+
+mode='selecting';
+selectionBox={x:wp.x,y:wp.y,w:0,h:0};
+selected=[];render();
+});
+
+canvas.addEventListener('mousemove',e=>{
+const rect=canvas.getBoundingClientRect();
+const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+mousePos={x:sx,y:sy};
+const wp=toWorld(sx,sy);
+if(mode==='dragging'&&dragOffset){
+dragOffset.forEach(d=>{d.comp.x=wp.x+d.dx;d.comp.y=wp.y+d.dy;});render();}
+if(mode==='selecting'&&selectionBox){
+selectionBox.w=wp.x-selectionBox.x;selectionBox.h=wp.y-selectionBox.y;render();}
+if(mode==='wiring')render();
+const pin=hitPin(wp.x,wp.y);const comp=hitComp(wp.x,wp.y);
+canvas.style.cursor=pin?'pointer':comp?'move':'crosshair';
+document.getElementById('status-center').textContent=
+'X:'+Math.round(wp.x)+' Y:'+Math.round(wp.y)+' | Zoom:'+(camera.zoom*100).toFixed(0)+'%';
+});
+
+canvas.addEventListener('mouseup',()=>{
+if(mode==='selecting'&&selectionBox){
+const bx=Math.min(selectionBox.x,selectionBox.x+selectionBox.w);
+const by=Math.min(selectionBox.y,selectionBox.y+selectionBox.h);
+const bw=Math.abs(selectionBox.w),bh=Math.abs(selectionBox.h);
+if(bw>5&&bh>5){
+comps.forEach(c=>{const def=COMP_DEFS[c.type];
+if(c.x+def.w>bx&&c.x<bx+bw&&c.y+def.h>by&&c.y<by+bh)selected.push(c);});}
+selectionBox=null;mode='idle';render();}
+if(mode==='dragging'){mode='idle';dragOffset=null;}
+});
+
+canvas.addEventListener('wheel',e=>{
+e.preventDefault();
+const rect=canvas.getBoundingClientRect();
+const sx=e.clientX-rect.left,sy=e.clientY-rect.top;
+const oldZoom=camera.zoom;
+camera.zoom=Math.max(0.2,Math.min(3,camera.zoom*(e.deltaY<0?1.1:0.9)));
+const wx=sx/oldZoom+camera.x,wy=sy/oldZoom+camera.y;
+camera.x=wx-sx/camera.zoom;camera.y=wy-sy/camera.zoom;
+render();
+});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('dblclick',e=>{
+const rect=canvas.getBoundingClientRect();
+const wp=toWorld(e.clientX-rect.left,e.clientY-rect.top);
+const comp=hitComp(wp.x,wp.y);
+if(comp)showProps(comp);
+});
+
+document.addEventListener('keydown',e=>{
+if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+if(e.key==='Escape'){mode='idle';placingType=null;wireStart=null;selected=[];
+document.getElementById('props').style.display='none';hideCtxMenu();render();}
+if(e.key==='Delete'||e.key==='Backspace')deleteSelected();
+if(e.key===' '){e.preventDefault();toggleRun();}
+if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo();}
+if(e.ctrlKey&&e.key==='c'){e.preventDefault();copySelected();}
+if(e.ctrlKey&&e.key==='v'){e.preventDefault();pasteClipboard();}
+if(e.ctrlKey&&e.key==='a'){e.preventDefault();selected=[...comps];render();}
+});
+
+document.querySelectorAll('.pal-item').forEach(item=>{
+item.addEventListener('click',()=>{
+placingType=item.dataset.type;mode='placing';
+setStatus('Placing '+COMP_DEFS[placingType].name+' - click canvas');
+});
+});
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function deleteSelected(){
+saveUndo();
+selected.forEach(s=>{
+if(s.id&&COMP_DEFS[s.type]){wires=wires.filter(w=>w.fromId!==s.id&&w.toId!==s.id);comps=comps.filter(c=>c.id!==s.id);}
+else if(s.fromId)wires=wires.filter(w=>w!==s);
+});
+selected=[];render();
+}
+function saveUndo(){undoStack.push(JSON.stringify({comps,wires,nextId}));if(undoStack.length>50)undoStack.shift();}
+function undo(){
+if(undoStack.length===0)return;
+const s=JSON.parse(undoStack.pop());
+comps=s.comps;wires=s.wires;nextId=s.nextId;selected=[];render();
+cliPrint('Undo','info');
+}
+function clearAll(){
+if(comps.length===0)return;
+saveUndo();comps=[];wires=[];selected=[];prevClockSignals={};tickCount=0;timingData=[];render();
+cliPrint('Circuit cleared','ok');
+}
+function copySelected(){
+clipboard=selected.filter(s=>s.id&&COMP_DEFS[s.type]).map(s=>({...s}));
+if(clipboard.length>0)cliPrint(clipboard.length+' component(s) copied','ok');
+}
+function pasteClipboard(){
+if(clipboard.length===0)return;
+saveUndo();
+const idMap={};
+clipboard.forEach(c=>{
+const nc=createComp(c.type,c.x+40,c.y+40);
+nc.state=JSON.parse(JSON.stringify(c.state));
+idMap[c.id]=nc.id;comps.push(nc);
+});
+wires.forEach(w=>{
+if(idMap[w.fromId]&&idMap[w.toId])
+wires.push({fromId:idMap[w.fromId],fromPin:w.fromPin,toId:idMap[w.toId],toPin:w.toPin});
+});
+selected=comps.filter(c=>Object.values(idMap).includes(c.id));
+render();cliPrint('Pasted','ok');
+}
+
+// ============================================================
+// CONTEXT MENU / PROPERTIES
+// ============================================================
+function showCtxMenu(x,y){const m=document.getElementById('ctx-menu');m.style.left=x+'px';m.style.top=y+'px';m.style.display='block';}
+function hideCtxMenu(){document.getElementById('ctx-menu').style.display='none';}
+function ctxRotate(){hideCtxMenu();}
+function ctxCopy(){if(ctxTarget){selected=[ctxTarget];copySelected();}hideCtxMenu();}
+function ctxPaste(){pasteClipboard();hideCtxMenu();}
+function ctxDelete(){if(ctxTarget){selected=[ctxTarget];deleteSelected();}hideCtxMenu();}
+
+function showProps(comp){
+const panel=document.getElementById('props');
+const def=COMP_DEFS[comp.type];
+let html='<h4>'+def.name+' (ID:'+comp.id+')</h4>';
+if(comp.type==='RAM'){
+html+='<div class="pr"><label>Memory:</label></div>';
+for(let i=0;i<8;i++)html+='<div class="pr"><label>['+i+']</label><span>'+comp.state.mem[i]+'</span></div>';
+}
+if(comp.type==='COUNTER')html+='<div class="pr"><label>Count:</label><span>'+comp.state.count+'</span></div>';
+if(comp.type==='DFF'||comp.type==='JKFF'||comp.type==='REG')html+='<div class="pr"><label>Q:</label><span>'+comp.state.q+'</span></div>';
+if(comp.type==='SHIFTREG')html+='<div class="pr"><label>Bits:</label><span>'+comp.state.bits.join('')+'</span></div>';
+html+='<button onclick="deleteCompById('+comp.id+')">Delete</button>';
+html+='<button class="sec" onclick="document.getElementById(\'props\').style.display=\'none\'">Close</button>';
+panel.innerHTML=html;panel.style.display='block';
+}
+function deleteCompById(id){
+saveUndo();wires=wires.filter(w=>w.fromId!==id&&w.toId!==id);comps=comps.filter(c=>c.id!==id);
+document.getElementById('props').style.display='none';render();
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function saveCircuit(){
+const data=JSON.stringify({comps,wires,nextId},null,2);
+const blob=new Blob([data],{type:'application/json'});
+const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='circuit.json';a.click();
+cliPrint('Circuit saved','ok');
+}
+function loadCircuit(){document.getElementById('file-input').click();}
+function handleFileLoad(e){
+const file=e.target.files[0];if(!file)return;
+const reader=new FileReader();
+reader.onload=function(ev){
+try{const data=JSON.parse(ev.target.result);
+comps=data.comps||[];wires=data.wires||[];nextId=data.nextId||1;
+prevClockSignals={};selected=[];render();cliPrint('Circuit loaded','ok');
+}catch(err){cliPrint('File error: '+err.message,'err');}
+};
+reader.readAsText(file);e.target.value='';
+}
+
+// ============================================================
+// PRESETS
+// ============================================================
+function loadPreset(name){
+if(!name)return;
+saveUndo();comps=[];wires=[];prevClockSignals={};nextId=1;selected=[];
+const ox=200,oy=150;
+const add=(t,x,y)=>{const c=createComp(t,x,y);comps.push(c);return c;};
+const wire=(f,fp,t,tp)=>wires.push({fromId:f.id,fromPin:fp,toId:t.id,toPin:tp});
+
+switch(name){
+case 'half-adder':{
+const a=add('SWITCH',ox,oy),b=add('SWITCH',ox,oy+80);
+const xo=add('XOR',ox+150,oy+20),an=add('AND',ox+150,oy+100);
+const ls=add('LED',ox+300,oy+30),lc=add('LED',ox+300,oy+110);
+wire(a,'out',xo,'A');wire(b,'out',xo,'B');wire(a,'out',an,'A');wire(b,'out',an,'B');
+wire(xo,'Y',ls,'in');wire(an,'Y',lc,'in');break;}
+case 'full-adder':{
+const a=add('SWITCH',ox,oy),b=add('SWITCH',ox,oy+70),ci=add('SWITCH',ox,oy+140);
+const fa=add('FULLADD',ox+150,oy+40),ls=add('LED',ox+310,oy+50),lc=add('LED',ox+310,oy+120);
+wire(a,'out',fa,'A');wire(b,'out',fa,'B');wire(ci,'out',fa,'Cin');
+wire(fa,'S',ls,'in');wire(fa,'Cout',lc,'in');break;}
+case 'sr-latch':{
+const s=add('SWITCH',ox,oy),r=add('SWITCH',ox,oy+80);
+const sr=add('SRLATCH',ox+150,oy+20),lq=add('LED',ox+310,oy+30),lqn=add('LED',ox+310,oy+90);
+wire(s,'out',sr,'S');wire(r,'out',sr,'R');wire(sr,'Q',lq,'in');wire(sr,'Qn',lqn,'in');break;}
+case 'd-latch':{
+const ck=add('CLOCK',ox,oy),d=add('SWITCH',ox,oy+80);
+const df=add('DFF',ox+150,oy+20),lq=add('LED',ox+320,oy+30),lqn=add('LED',ox+320,oy+90);
+wire(d,'out',df,'D');wire(ck,'out',df,'CLK');wire(df,'Q',lq,'in');wire(df,'Qn',lqn,'in');break;}
+case 'jk-toggle':{
+const ck=add('CLOCK',ox,oy);
+const jk=add('JKFF',ox+150,oy+20),lq=add('LED',ox+320,oy+30);
+const v1=add('VCC',ox,oy+80);
+wire(v1,'out',jk,'J');wire(v1,'out',jk,'K');wire(ck,'out',jk,'CLK');wire(jk,'Q',lq,'in');break;}
+case 'counter':{
+const ck=add('CLOCK',ox,oy),cn=add('COUNTER',ox+150,oy+10);
+const l0=add('LED',ox+320,oy),l1=add('LED',ox+320,oy+50),l2=add('LED',ox+320,oy+100),l3=add('LED',ox+320,oy+150);
+const sg=add('7SEG',ox+420,oy+20);
+wire(ck,'out',cn,'CLK');wire(cn,'Q0',l0,'in');wire(cn,'Q1',l1,'in');wire(cn,'Q2',l2,'in');wire(cn,'Q3',l3,'in');
+wire(cn,'Q0',sg,'a');wire(cn,'Q1',sg,'b');wire(cn,'Q2',sg,'c');wire(cn,'Q3',sg,'d');break;}
+case 'clock-div':{
+const ck=add('CLOCK',ox,oy);
+const d1=add('DFF',ox+130,oy),d2=add('DFF',ox+280,oy);
+const l1=add('LED',ox+430,oy),l2=add('LED',ox+430,oy+60);
+wire(ck,'out',d1,'CLK');wire(d1,'Qn',d1,'D');wire(d1,'Q',d2,'CLK');wire(d2,'Qn',d2,'D');
+wire(d1,'Q',l1,'in');wire(d2,'Q',l2,'in');break;}
+case 'adder4':{
+const fas=[add('FULLADD',ox+100,oy),add('FULLADD',ox+250,oy),add('FULLADD',ox+400,oy),add('FULLADD',ox+550,oy)];
+const swA=[],swB=[],leds=[];
+for(let i=0;i<4;i++){swA.push(add('SWITCH',ox,oy-20+i*50));swB.push(add('SWITCH',ox,oy+200+i*50));
+leds.push(add('LED',ox+700,oy+10+i*50));}
+const ledCo=add('LED',ox+700,oy+210);
+const gnd=add('GND',ox+50,oy+60);
+wire(gnd,'out',fas[0],'Cin');
+for(let i=0;i<4;i++){wire(swA[i],'out',fas[i],'A');wire(swB[i],'out',fas[i],'B');wire(fas[i],'S',leds[i],'in');}
+for(let i=0;i<3;i++)wire(fas[i],'Cout',fas[i+1],'Cin');
+wire(fas[3],'Cout',ledCo,'in');break;}
+case 'shift-reg':{
+const ck=add('CLOCK',ox,oy),sw=add('SWITCH',ox,oy+80);
+const sr=add('SHIFTREG',ox+150,oy+20);
+const l0=add('LED',ox+320,oy),l1=add('LED',ox+320,oy+40),l2=add('LED',ox+320,oy+80),l3=add('LED',ox+320,oy+120);
+wire(ck,'out',sr,'CLK');wire(sw,'out',sr,'DIN');
+wire(sr,'Q0',l0,'in');wire(sr,'Q1',l1,'in');wire(sr,'Q2',l2,'in');wire(sr,'Q3',l3,'in');break;}
+case 'mux-demo':{
+const i0=add('SWITCH',ox,oy),i1=add('SWITCH',ox,oy+70),sel=add('SWITCH',ox,oy+140);
+const mx=add('MUX2',ox+150,oy+40),ly=add('LED',ox+300,oy+50);
+wire(i0,'out',mx,'I0');wire(i1,'out',mx,'I1');wire(sel,'out',mx,'SEL');wire(mx,'Y',ly,'in');break;}
+case 'decoder-demo':{
+const a=add('SWITCH',ox,oy),b=add('SWITCH',ox,oy+70);
+const dc=add('DECODER',ox+150,oy+20);
+const l0=add('LED',ox+310,oy),l1=add('LED',ox+310,oy+40),l2=add('LED',ox+310,oy+80),l3=add('LED',ox+310,oy+120);
+wire(a,'out',dc,'A');wire(b,'out',dc,'B');
+wire(dc,'Y0',l0,'in');wire(dc,'Y1',l1,'in');wire(dc,'Y2',l2,'in');wire(dc,'Y3',l3,'in');break;}
+case 'alu-demo':{
+const a=add('DIP4',ox,oy),b=add('DIP4',ox,oy+100);
+const op0=add('SWITCH',ox+100,oy+200),op1=add('SWITCH',ox+100,oy+260);
+const alu=add('ALU',ox+200,oy+60);
+const sg=add('7SEG',ox+370,oy+40);
+const lz=add('LED',ox+370,oy+140);
+wire(a,'b0',alu,'A');wire(b,'b0',alu,'B');
+wire(op0,'out',alu,'OP0');wire(op1,'out',alu,'OP1');
+wire(alu,'Y',sg,'a');wire(alu,'Z',lz,'in');break;}
+case 'ram-demo':{
+const ck=add('CLOCK',ox,oy);
+const d=add('DIP4',ox,oy+80);
+const addr=add('DIP4',ox,oy+180);
+const we=add('SWITCH',ox+100,oy+260);
+const ram=add('RAM',ox+200,oy+60);
+const sg=add('7SEG',ox+380,oy+60);
+wire(ck,'out',ram,'CLK');wire(d,'b0',ram,'D');wire(addr,'b0',ram,'ADDR');
+wire(we,'out',ram,'WE');wire(ram,'Q',sg,'a');break;}
+case 'traffic':{
+const ck=add('CLOCK',ox,oy);
+const cn=add('COUNTER',ox+130,oy);
+const a1=add('AND',ox+300,oy-40),a2=add('AND',ox+300,oy+40),a3=add('AND',ox+300,oy+120);
+const n1=add('NOT',ox+220,oy-20),n2=add('NOT',ox+220,oy+60);
+const lr=add('LED',ox+450,oy-30),ly=add('LED',ox+450,oy+50),lg=add('LED',ox+450,oy+130);
+wire(ck,'out',cn,'CLK');
+wire(cn,'Q0',n1,'A');wire(cn,'Q1',n2,'A');
+wire(n1,'Y',a1,'A');wire(n2,'Y',a1,'B');wire(a1,'Y',lr,'in');
+wire(cn,'Q0',a2,'A');wire(cn,'Q1',a2,'B');wire(a2,'Y',ly,'in');
+wire(n1,'Y',a3,'A');wire(cn,'Q1',a3,'B');wire(a3,'Y',lg,'in');break;}
+}
+document.getElementById('preset-sel').value='';
+render();cliPrint('Preset loaded: '+name,'ok');
+}
+
+// ============================================================
+// CLI ENGINE
+// ============================================================
+const cliOutput=document.getElementById('cli-output');
+const cliInput=document.getElementById('cli-input');
+
+function cliPrint(text,cls){
+const div=document.createElement('div');
+div.className=cls||'data';
+div.textContent=text;
+cliOutput.appendChild(div);
+cliOutput.scrollTop=cliOutput.scrollHeight;
+}
+
+function clearCLI(){cliOutput.innerHTML='';cliPrint('CLI ready. Type help for commands.','info');}
+
+function toggleCLI(){
+const p=document.getElementById('cli-panel');
+p.style.display=p.style.display==='none'?'flex':'none';
+resizeCanvas();
+}
+
+cliInput.addEventListener('keydown',e=>{
+if(e.key==='Enter'){
+const cmd=cliInput.value.trim();
+if(!cmd)return;
+cliHistory.push(cmd);
+cliHistIdx=cliHistory.length;
+cliPrint('> '+cmd,'cmd');
+executeCLI(cmd);
+cliInput.value='';
+}else if(e.key==='ArrowUp'){
+e.preventDefault();
+if(cliHistIdx>0){cliHistIdx--;cliInput.value=cliHistory[cliHistIdx];}
+}else if(e.key==='ArrowDown'){
+e.preventDefault();
+if(cliHistIdx<cliHistory.length-1){cliHistIdx++;cliInput.value=cliHistory[cliHistIdx];}
+else{cliHistIdx=cliHistory.length;cliInput.value='';}
+}else if(e.key==='Tab'){
+e.preventDefault();
+tabComplete();
+}
+});
+
+function tabComplete(){
+const val=cliInput.value;
+const parts=val.split(/\s+/);
+const cmds=['add','wire','del','delwire','list','wires','get','set','run','stop','step','reset',
+'speed','move','probe','trace','untrace','dump','preset','save','load','clear','undo','types',
+'help','zoom','pan','select','deselect','tick','state','memread','memwrite','romset','history'];
+if(parts.length===1){
+const matches=cmds.filter(c=>c.startsWith(parts[0]));
+if(matches.length===1)cliInput.value=matches[0]+' ';
+else if(matches.length>1)cliPrint('Matches: '+matches.join(', '),'info');
+}else if(parts[0]==='add'&&parts.length===2){
+const types=Object.keys(COMP_DEFS).filter(t=>t.toLowerCase().startsWith(parts[1].toLowerCase()));
+if(types.length===1)cliInput.value=parts[0]+' '+types[0]+' ';
+else if(types.length>1)cliPrint('Types: '+types.join(', '),'info');
+}else if(parts[0]==='preset'&&parts.length===2){
+const presets=['half-adder','full-adder','sr-latch','d-latch','jk-toggle','counter','clock-div',
+'adder4','shift-reg','mux-demo','decoder-demo','alu-demo','ram-demo','traffic'];
+const matches=presets.filter(p=>p.startsWith(parts[1]));
+if(matches.length===1)cliInput.value=parts[0]+' '+matches[0];
+else if(matches.length>1)cliPrint('Presets: '+matches.join(', '),'info');
+}
+}
+
+function executeCLI(input){
+const parts=input.split(/\s+/);
+const cmd=parts[0].toLowerCase();
+
+switch(cmd){
+case 'help':
+cliPrint('=== CLI Commands ===','warn');
+cliPrint('add TYPE X Y          - Add component','info');
+cliPrint('wire ID.PIN ID.PIN    - Connect pins','info');
+cliPrint('del ID                - Delete component','info');
+cliPrint('delwire N             - Delete wire by index','info');
+cliPrint('list                  - List all components','info');
+cliPrint('wires                 - List all wires','info');
+cliPrint('get ID                - Show component state','info');
+cliPrint('set ID VAL            - Set switch/DIP value','info');
+cliPrint('run / stop / step     - Simulation control','info');
+cliPrint('reset                 - Reset simulation','info');
+cliPrint('speed MS              - Set speed (ms)','info');
+cliPrint('move ID X Y           - Move component','info');
+cliPrint('probe ID              - Show pin values','info');
+cliPrint('trace ID              - Add to timing trace','info');
+cliPrint('untrace               - Clear trace targets','info');
+cliPrint('dump                  - Dump circuit as text','info');
+cliPrint('preset NAME           - Load preset','info');
+cliPrint('save / load           - Save/load file','info');
+cliPrint('clear / undo          - Clear all / Undo','info');
+cliPrint('types                 - List component types','info');
+cliPrint('zoom FACTOR           - Set zoom (0.2-3)','info');
+cliPrint('pan X Y               - Pan camera','info');
+cliPrint('select ID             - Select component','info');
+cliPrint('deselect              - Clear selection','info');
+cliPrint('tick                  - Show current tick','info');
+cliPrint('state                 - Show full circuit state','info');
+cliPrint('memread ID ADDR       - Read RAM/ROM','info');
+cliPrint('memwrite ID ADDR VAL  - Write RAM','info');
+cliPrint('romset ID ADDR VAL    - Set ROM content','info');
+cliPrint('history               - Show command history','info');
+break;
+
+case 'types':
+cliPrint('=== Component Types ===','warn');
+Object.keys(COMP_DEFS).forEach(t=>{
+const d=COMP_DEFS[t];
+cliPrint(t.padEnd(12)+' in:['+d.inputs.join(',')+'] out:['+d.outputs.join(',')+']','data');
+});
+break;
+
+case 'add':{
+if(parts.length<4){cliPrint('Usage: add TYPE X Y','err');break;}
+const type=parts[1].toUpperCase();
+if(!COMP_DEFS[type]){cliPrint('Unknown type: '+type+'. Use "types" to list.','err');break;}
+const x=parseFloat(parts[2]),y=parseFloat(parts[3]);
+if(isNaN(x)||isNaN(y)){cliPrint('Invalid coordinates','err');break;}
+saveUndo();
+const comp=createComp(type,x,y);
+comps.push(comp);
+cliPrint('Added '+type+' with ID '+comp.id+' at ('+x+','+y+')','ok');
+render();break;}
+
+case 'wire':{
+if(parts.length<3){cliPrint('Usage: wire ID.PIN ID.PIN','err');break;}
+const parsePin=(s)=>{
+const dot=s.indexOf('.');
+if(dot<0)return null;
+const id=parseInt(s.substring(0,dot));
+const pin=s.substring(dot+1);
+return{id,pin};
+};
+const from=parsePin(parts[1]),to=parsePin(parts[2]);
+if(!from||!to){cliPrint('Invalid pin format. Use ID.PIN','err');break;}
+const fc=comps.find(c=>c.id===from.id),tc=comps.find(c=>c.id===to.id);
+if(!fc){cliPrint('Component '+from.id+' not found','err');break;}
+if(!tc){cliPrint('Component '+to.id+' not found','err');break;}
+const fdef=COMP_DEFS[fc.type],tdef=COMP_DEFS[tc.type];
+if(!fdef.outputs.includes(from.pin)){cliPrint('Pin '+from.pin+' is not an output of '+fc.type,'err');break;}
+if(!tdef.inputs.includes(to.pin)){cliPrint('Pin '+to.pin+' is not an input of '+tc.type,'err');break;}
+saveUndo();
+wires.push({fromId:from.id,fromPin:from.pin,toId:to.id,toPin:to.pin});
+cliPrint('Wired '+from.id+'.'+from.pin+' -> '+to.id+'.'+to.pin,'ok');
+render();break;}
+
+case 'del':{
+if(parts.length<2){cliPrint('Usage: del ID','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+saveUndo();
+wires=wires.filter(w=>w.fromId!==id&&w.toId!==id);
+comps=comps.filter(c=>c.id!==id);
+cliPrint('Deleted component '+id,'ok');
+render();break;}
+
+case 'delwire':{
+if(parts.length<2){cliPrint('Usage: delwire INDEX','err');break;}
+const idx=parseInt(parts[1]);
+if(idx<0||idx>=wires.length){cliPrint('Wire index out of range (0-'+(wires.length-1)+')','err');break;}
+saveUndo();
+wires.splice(idx,1);
+cliPrint('Deleted wire '+idx,'ok');
+render();break;}
+
+case 'list':
+if(comps.length===0){cliPrint('No components','info');break;}
+cliPrint('ID  TYPE        X     Y     STATE','warn');
+comps.forEach(c=>{
+let state='';
+if(c.type==='SWITCH')state=c.state.on?'ON':'OFF';
+if(c.type==='CLOCK')state=c.state.phase?'HIGH':'LOW';
+if(c.type==='COUNTER')state='count='+c.state.count;
+if(c.type==='DFF'||c.type==='JKFF'||c.type==='REG')state='Q='+c.state.q;
+if(c.type==='SRLATCH')state='Q='+c.state.q;
+if(c.type==='SHIFTREG')state='bits='+c.state.bits.join('');
+if(c.type==='DIP4')state='bits='+c.state.bits.join('');
+cliPrint(String(c.id).padEnd(4)+c.type.padEnd(12)+String(Math.round(c.x)).padEnd(6)+String(Math.round(c.y)).padEnd(6)+state,'data');
+});
+break;
+
+case 'wires':
+if(wires.length===0){cliPrint('No wires','info');break;}
+cliPrint('IDX  FROM         TO','warn');
+wires.forEach((w,i)=>{
+cliPrint(String(i).padEnd(5)+String(w.fromId+'.'+w.fromPin).padEnd(13)+w.toId+'.'+w.toPin,'data');
+});
+break;
+
+case 'get':{
+if(parts.length<2){cliPrint('Usage: get ID','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+const def=COMP_DEFS[comp.type];
+cliPrint('=== '+def.name+' (ID:'+comp.id+') ===','warn');
+cliPrint('Type: '+comp.type,'data');
+cliPrint('Pos: ('+Math.round(comp.x)+', '+Math.round(comp.y)+')','data');
+if(Object.keys(comp.state).length>0){
+cliPrint('State: '+JSON.stringify(comp.state),'data');
+}
+cliPrint('Inputs: '+JSON.stringify(comp.inputs),'data');
+cliPrint('Outputs: '+JSON.stringify(comp.outputs),'data');
+break;}
+
+case 'set':{
+if(parts.length<3){cliPrint('Usage: set ID VALUE','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+if(comp.type==='SWITCH'){
+comp.state.on=parts[2]==='1'||parts[2].toLowerCase()==='on'||parts[2].toLowerCase()==='true';
+cliPrint('Switch '+id+' set to '+(comp.state.on?'ON':'OFF'),'ok');
+}else if(comp.type==='DIP4'){
+const val=parseInt(parts[2]);
+if(isNaN(val)){cliPrint('Value must be a number','err');break;}
+comp.state.bits=[val&1,(val>>1)&1,(val>>2)&1,(val>>3)&1];
+cliPrint('DIP4 '+id+' set to '+val+' (bits: '+comp.state.bits.join('')+')','ok');
+}else if(comp.type==='CLOCK'){
+comp.state.phase=parseInt(parts[2])?1:0;
+cliPrint('Clock '+id+' phase set to '+comp.state.phase,'ok');
+}else{
+cliPrint('Cannot set value on '+comp.type,'err');
+}
+render();break;}
+
+case 'run':
+if(!running)toggleRun();
+break;
+case 'stop':
+if(running)toggleRun();
+break;
+case 'step':
+stepOnce();
+break;
+case 'reset':
+resetSim();
+break;
+
+case 'speed':{
+if(parts.length<2){cliPrint('Usage: speed MS','err');break;}
+const ms=parseInt(parts[1]);
+if(isNaN(ms)||ms<1){cliPrint('Invalid speed','err');break;}
+simSpeed=ms;
+if(running){clearInterval(simTimer);simTimer=setInterval(()=>{simulate();render();},simSpeed);}
+cliPrint('Speed set to '+ms+'ms','ok');break;}
+
+case 'move':{
+if(parts.length<4){cliPrint('Usage: move ID X Y','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+comp.x=parseFloat(parts[2]);comp.y=parseFloat(parts[3]);
+cliPrint('Moved '+id+' to ('+comp.x+','+comp.y+')','ok');
+render();break;}
+
+case 'probe':{
+if(parts.length<2){cliPrint('Usage: probe ID','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+const def=COMP_DEFS[comp.type];
+cliPrint('=== Probe: '+def.name+' (ID:'+id+') ===','warn');
+def.inputs.forEach(p=>cliPrint('  IN  '+p.padEnd(6)+' = '+comp.inputs[p],'data'));
+def.outputs.forEach(p=>cliPrint('  OUT '+p.padEnd(6)+' = '+comp.outputs[p],'data'));
+break;}
+
+case 'trace':{
+if(parts.length<2){cliPrint('Usage: trace ID','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+if(!traceTargets.includes(id)){traceTargets.push(id);
+cliPrint('Tracing component '+id+'. Run simulation to collect data.','ok');
+document.getElementById('timing-panel').style.display='block';
+}else cliPrint('Already tracing '+id,'info');
+break;}
+
+case 'untrace':
+traceTargets=[];timingData=[];
+document.getElementById('timing-panel').style.display='none';
+cliPrint('Trace cleared','ok');
+break;
+
+case 'dump':
+cliPrint('=== Circuit Dump ===','warn');
+cliPrint('Components: '+comps.length,'data');
+comps.forEach(c=>cliPrint('  ['+c.id+'] '+c.type+' at ('+Math.round(c.x)+','+Math.round(c.y)+')','data'));
+cliPrint('Wires: '+wires.length,'data');
+wires.forEach((w,i)=>cliPrint('  ['+i+'] '+w.fromId+'.'+w.fromPin+' -> '+w.toId+'.'+w.toPin,'data'));
+break;
+
+case 'preset':{
+if(parts.length<2){cliPrint('Usage: preset NAME','err');break;}
+const presets=['half-adder','full-adder','sr-latch','d-latch','jk-toggle','counter','clock-div',
+'adder4','shift-reg','mux-demo','decoder-demo','alu-demo','ram-demo','traffic'];
+if(!presets.includes(parts[1])){cliPrint('Unknown preset. Available: '+presets.join(', '),'err');break;}
+document.getElementById('preset-sel').value=parts[1];
+loadPreset(parts[1]);
+break;}
+
+case 'save':saveCircuit();break;
+case 'load':loadCircuit();break;
+case 'clear':clearAll();break;
+case 'undo':undo();break;
+
+case 'zoom':{
+if(parts.length<2){cliPrint('Usage: zoom FACTOR (0.2-3)','err');break;}
+camera.zoom=Math.max(0.2,Math.min(3,parseFloat(parts[1])));
+render();cliPrint('Zoom: '+(camera.zoom*100).toFixed(0)+'%','ok');break;}
+
+case 'pan':{
+if(parts.length<3){cliPrint('Usage: pan X Y','err');break;}
+camera.x=parseFloat(parts[1]);camera.y=parseFloat(parts[2]);
+render();cliPrint('Camera moved','ok');break;}
+
+case 'select':{
+if(parts.length<2){cliPrint('Usage: select ID','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+selected=[comp];render();cliPrint('Selected '+id,'ok');break;}
+
+case 'deselect':
+selected=[];render();cliPrint('Selection cleared','ok');break;
+
+case 'tick':
+cliPrint('Tick: '+tickCount,'data');break;
+
+case 'state':
+cliPrint('=== Full Circuit State ===','warn');
+cliPrint('Tick: '+tickCount+' | Running: '+running+' | Speed: '+simSpeed+'ms','data');
+cliPrint('Components: '+comps.length+' | Wires: '+wires.length,'data');
+comps.forEach(c=>{
+const def=COMP_DEFS[c.type];
+const outs=def.outputs.map(p=>p+'='+c.outputs[p]).join(' ');
+cliPrint('  ['+c.id+'] '+c.type.padEnd(10)+' '+outs,'data');
+});
+break;
+
+case 'memread':{
+if(parts.length<3){cliPrint('Usage: memread ID ADDR','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+if(comp.type!=='RAM'&&comp.type!=='ROM'){cliPrint('Component is not RAM/ROM','err');break;}
+const addr=parseInt(parts[2])&15;
+cliPrint('mem['+addr+'] = '+comp.state.mem[addr],'data');break;}
+
+case 'memwrite':{
+if(parts.length<4){cliPrint('Usage: memwrite ID ADDR VAL','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+if(comp.type!=='RAM'){cliPrint('Component is not RAM','err');break;}
+const addr=parseInt(parts[2])&15;
+const val=parseInt(parts[3])&15;
+comp.state.mem[addr]=val;
+cliPrint('mem['+addr+'] = '+val,'ok');render();break;}
+
+case 'romset':{
+if(parts.length<4){cliPrint('Usage: romset ID ADDR VAL','err');break;}
+const id=parseInt(parts[1]);
+const comp=comps.find(c=>c.id===id);
+if(!comp){cliPrint('Component '+id+' not found','err');break;}
+if(comp.type!=='ROM'){cliPrint('Component is not ROM','err');break;}
+const addr=parseInt(parts[2])&15;
+const val=parseInt(parts[3])&15;
+comp.state.mem[addr]=val;
+cliPrint('rom['+addr+'] = '+val,'ok');render();break;}
+
+case 'history':
+cliHistory.forEach((h,i)=>cliPrint('  '+i+': '+h,'data'));
+break;
+
+default:
+cliPrint('Unknown command: '+cmd+'. Type help for commands.','err');
+}
+}
+
+// ============================================================
+// TIMING DIAGRAM
+// ============================================================
+function drawTiming(){
+const tc=document.getElementById('timing-canvas');
+const tctx=tc.getContext('2d');
+tctx.fillStyle='#0d1117';
+tctx.fillRect(0,0,tc.width,tc.height);
+if(timingData.length<2||traceTargets.length===0)return;
+
+const signals=[];
+traceTargets.forEach(id=>{
+const c=comps.find(x=>x.id===id);
+if(c){COMP_DEFS[c.type].outputs.forEach(p=>signals.push(id+'.'+p));}
+});
+
+const rowH=Math.min(20,tc.height/Math.max(signals.length,1));
+const startX=50;
+const dataW=tc.width-startX-10;
+
+signals.forEach((sig,si)=>{
+const y=si*rowH+10;
+tctx.fillStyle='#8b949e';
+tctx.font='9px monospace';
+tctx.fillText(sig,2,y+rowH/2+3);
+tctx.strokeStyle='#30363d';
+tctx.beginPath();tctx.moveTo(startX,y+rowH);tctx.lineTo(tc.width-10,y+rowH);tctx.stroke();
+
+tctx.strokeStyle='#3fb950';
+tctx.lineWidth=1.5;
+tctx.beginPath();
+const n=timingData.length;
+for(let i=0;i<n;i++){
+const x=startX+(i/(n-1))*dataW;
+const val=timingData[i][sig]||0;
+const yy=y+(val?2:rowH-2);
+if(i===0)tctx.moveTo(x,yy);else tctx.lineTo(x,yy);
+}
+tctx.stroke();
+});
+}
+
+setInterval(drawTiming,200);
+
+// ============================================================
+// MISC
+// ============================================================
+function showHelp(){document.getElementById('help-modal').style.display='flex';}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+setTimeout(()=>t.style.display='none',2000);}
+function setStatus(msg){document.getElementById('status-left').textContent=msg;}
+
+// ============================================================
+// INIT
+// ============================================================
+resizeCanvas();
+render();
+cliPrint('Digital Circuit Sandbox CLI','warn');
+cliPrint('Type "help" for commands, "types" for component list','info');
+cliPrint('Type "preset counter" then "run" to try a demo','info');
 </script>
 </body>
 </html>
